@@ -1,6 +1,8 @@
 ﻿using System;
+using AutoMapper;
 using Game.Domain;
 using Microsoft.AspNetCore.Mvc;
+using WebApi.Mappers;
 using WebApi.Models;
 
 namespace WebApi.Controllers
@@ -9,22 +11,44 @@ namespace WebApi.Controllers
     [ApiController]
     public class UsersController : Controller
     {
+        private readonly IUserRepository userRepository;
+        private readonly IMapper mapper;
+
         // Чтобы ASP.NET положил что-то в userRepository требуется конфигурация
-        // git_test
-        public UsersController(IUserRepository userRepository)
+        public UsersController(IUserRepository userRepository, IMapper mapper)
         {
+            this.userRepository = userRepository;
+            this.mapper = mapper;
         }
 
-        [HttpGet("{userId}")]
+        [HttpGet("{userId}", Name = nameof(GetUserById))]
+        [Produces("application/json", "application/xml")]
         public ActionResult<UserDto> GetUserById([FromRoute] Guid userId)
         {
-            throw new NotImplementedException();
+            var user = userRepository.FindById(userId);
+            if (user is null)
+                return NotFound();
+
+            return Ok(mapper.Map<UserDto>(user));
         }
 
         [HttpPost]
-        public IActionResult CreateUser([FromBody] object user)
+        [Produces("application/json", "application/xml")]
+        public IActionResult CreateUser([FromBody] UserCreateDto user)
         {
-            throw new NotImplementedException();
+            if (user is null)
+                return BadRequest();
+            
+            if (!ModelState.IsValid)
+                return UnprocessableEntity(ModelState);
+            
+            var entity = mapper.Map<UserEntity>(user);
+            entity = userRepository.Insert(entity);
+            
+            return CreatedAtRoute(
+                nameof(GetUserById),
+                new { userId = entity.Id },
+                entity.Id);
         }
     }
 }
