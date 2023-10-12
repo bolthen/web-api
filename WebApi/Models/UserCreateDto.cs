@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 
@@ -8,7 +9,11 @@ namespace WebApi.Models
     {
         [Required]
         public string Login { get; set; }
+        
+        [DefaultValue("John")]
         public string FirstName { get; set; }
+        
+        [DefaultValue("Doe")]
         public string LastName { get; set; }
         
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
