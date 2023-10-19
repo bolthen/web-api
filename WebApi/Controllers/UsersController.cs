@@ -158,5 +158,12 @@ namespace WebApi.Controllers
 
             return Ok(users);
         }
+
+        [HttpOptions]
+        public IActionResult GetOptions()
+        {
+            Response.Headers.Add("Allow", "POST,GET,OPTIONS");
+            return Ok();
+        }
     }
 }
