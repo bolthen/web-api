@@ -38,17 +38,49 @@ namespace WebApi.Controllers
         {
             if (user is null)
                 return BadRequest();
-            
+
+            if (!ModelState.IsValid)
+                return UnprocessableEntity(ModelState);
+
+            var entity = mapper.Map<UserEntity>(user);
+            entity = userRepository.Insert(entity);
+
+            return CreatedAtRoute(
+                nameof(GetUserById),
+                new {userId = entity.Id},
+                entity.Id);
+        }
+
+        [HttpPut("{userId}")]
+        [Produces("application/json", "application/xml")]
+        public IActionResult UpdateUser([FromRoute] Guid? userId, [FromBody] UserUpdateDto userUpdate)
+        {
+            if (userUpdate is null || !userId.HasValue)
+                return BadRequest();
+
             if (!ModelState.IsValid)
                 return UnprocessableEntity(ModelState);
             
-            var entity = mapper.Map<UserEntity>(user);
-            entity = userRepository.Insert(entity);
+            var user = userRepository.FindById(userId.Value);
+            if (user is not null)
+                mapper.Map(userUpdate, user);
+            else
+                user = mapper.Map<UserEntity>(userUpdate);
+
+            if (user.Id != Guid.Empty)
+            {
+                userRepository.UpdateOrInsert(user, out var isInserted);
+                if (!isInserted)
+                    return NoContent();
+            }
+            else
+                user = userRepository.Insert(user);
             
+
             return CreatedAtRoute(
                 nameof(GetUserById),
-                new { userId = entity.Id },
-                entity.Id);
+                new {userId = user.Id},
+                user.Id);
         }
     }
 }
